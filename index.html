@@ -125,7 +125,9 @@
                     const historyEntry = document.createElement('div');
                     historyEntry.className = 'history-entry';
                     const startTimeStr = logElement.querySelector('div:first-child')?.textContent || 'Start: N/A';
-                    const stopTimeStr = logElement.querySelector('div:last-child')?.textContent || 'Stop: N/A';
+                    const stopLine = logElement.querySelector('div:last-child')?.textContent || 'Stop: N/A';
+                    let stopTimeStr = stopLine.split('|')[0].trim(); // Get only "Stop: hh:mm:ss"
+                   
                     const totalTimeStr = `Total Time: ${formatTime(this.elapsed)}`;
 
                     historyEntry.textContent = `${this.label} Session | ${startTimeStr} | ${stopTimeStr} | ${totalTimeStr}`;
