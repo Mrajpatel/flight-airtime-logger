@@ -13,7 +13,7 @@
           }
           .timestamp {
                font-size: 0.9rem;
-               color: #555;
+               color: #222;
           }
           .btn {
                min-width: 100px;
@@ -25,6 +25,49 @@
                margin-bottom: 4px;
                border-radius: 4px;
           }
+
+          /* Dark Theme */
+          body.dark-theme .timestamp {
+              color: #ccc;
+          }
+
+          body.dark-theme {
+               background-color: #121212 !important;
+               color: #f0f0f0;
+          }
+
+          body.dark-theme .card {
+               background-color: #1e1e1e;
+               color: #f0f0f0;
+               border: 1px solid #333;
+          }
+
+          body.dark-theme .btn-primary,
+          body.dark-theme .btn-success,
+          body.dark-theme .btn-danger,
+          body.dark-theme .btn-secondary,
+          body.dark-theme .btn-info,
+          body.dark-theme .btn-outline-primary {
+               background-color: #333;
+               color: #f0f0f0;
+               border-color: #444;
+          }
+
+          body.dark-theme .btn-primary:hover,
+          body.dark-theme .btn-success:hover,
+          body.dark-theme .btn-danger:hover,
+          body.dark-theme .btn-secondary:hover,
+          body.dark-theme .btn-info:hover,
+          body.dark-theme .btn-outline-primary:hover {
+               background-color: #444;
+          }
+
+          body.dark-theme .history-entry {
+               background: #2a2a2a;
+               border: 1px solid #444;
+               color: #f0f0f0;
+          }
+
     </style>
 </head>
 <body class="bg-light p-3">
@@ -32,6 +75,13 @@
     <div class="container text-center">
           <h1 class="mb-4">Flight & Air Time Tracker</h1>
 
+          <!-- Dark Mode Toggle -->
+          <div class="form-check form-switch mb-4 text-end">
+               <input class="form-check-input" type="checkbox" id="theme-toggle">
+               <label class="form-check-label" for="theme-toggle">🌙 Dark Mode</label>
+          </div>
+
+ 
           <!-- Flight Time Section -->
           <div class="card mb-4">
                <div class="card-body">
@@ -127,7 +177,7 @@
                     const startTimeStr = logElement.querySelector('div:first-child')?.textContent || 'Start: N/A';
                     const stopLine = logElement.querySelector('div:last-child')?.textContent || 'Stop: N/A';
                     let stopTimeStr = stopLine.split('|')[0].trim(); // Get only "Stop: hh:mm:ss"
-                   
+
                     const totalTimeStr = `Total Time: ${formatTime(this.elapsed)}`;
 
                     historyEntry.textContent = `${this.label} Session | ${startTimeStr} | ${stopTimeStr} | ${totalTimeStr}`;
@@ -205,6 +255,26 @@
                event.preventDefault();
                event.returnValue = '';  // Required for some browsers
           });
+
+          // Dark Theme Toggle Logic
+          const themeToggle = document.getElementById('theme-toggle');
+
+          // Load saved theme preference
+          if (localStorage.getItem('theme') === 'dark') {
+               document.body.classList.add('dark-theme');
+               themeToggle.checked = true;
+          }
+
+          themeToggle.addEventListener('change', () => {
+               if (themeToggle.checked) {
+                    document.body.classList.add('dark-theme');
+                    localStorage.setItem('theme', 'dark');
+               } else {
+                    document.body.classList.remove('dark-theme');
+                    localStorage.setItem('theme', 'light');
+               }
+          });
+
 
     </script>
 
