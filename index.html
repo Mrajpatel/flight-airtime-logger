@@ -1,116 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
-     <head>
-     <meta charset="UTF-8" />
-     <meta name="viewport" content="width=device-width, initial-scale=1" />
-     <title>Flight & Air Time Tracker</title>
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-     <style>
-               .timer-display {
-                    font-size: 2rem;
-                    font-weight: bold;
-               }
-               .timestamp {
-                    font-size: 0.9rem;
-                    color: #555;
-               }
-     </style>
-     </head>
-     <body class="bg-light p-3">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flight & Air Time Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+          .timer-display {
+               font-size: 2rem;
+               font-weight: bold;
+          }
+          .timestamp {
+               font-size: 0.9rem;
+               color: #555;
+          }
+          .btn {
+               min-width: 100px;
+          }
+          .history-entry {
+               font-family: monospace;
+               background: #f8f9fa;
+               padding: 6px 10px;
+               margin-bottom: 4px;
+               border-radius: 4px;
+          }
+    </style>
+</head>
+<body class="bg-light p-3">
 
-          <div class="container text-center">
-                    <h1 class="mb-4">Flight & Air Time Tracker</h1>
+    <div class="container text-center">
+          <h1 class="mb-4">Flight & Air Time Tracker</h1>
 
-                    <!-- Flight Time Section -->
-                    <div class="card mb-4">
-                         <div class="card-body">
-                              <h3>Flight Time</h3>
-                              <div id="flight-time-display" class="timer-display my-2">00:00:00.000</div>
-                              <button id="flight-start" class="btn btn-success me-2">Start</button>
-                              <button id="flight-stop" class="btn btn-danger">Stop</button>
-                              <div class="mt-2 timestamp" id="flight-log"></div>
-                         </div>
-                    </div>
+          <!-- Flight Time Section -->
+          <div class="card mb-4">
+               <div class="card-body">
+               <h3>Flight Time</h3>
+               <div id="flight-time-display" class="timer-display my-2">00:00:00.000</div>
+          
+               <!-- Responsive Button Group -->
+               <div class="d-flex flex-wrap justify-content-center gap-2 my-2">
+                    <button id="flight-start" class="btn btn-success">Start</button>
+                    <button id="flight-stop" class="btn btn-danger" disabled>Stop</button>
+                    <button id="flight-reset" class="btn btn-primary" style="display:none;" title="Reset">
+                         <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+               </div>
+          
+               <div class="mt-2 timestamp" id="flight-log"></div>
+               </div>
+          </div>
+ 
 
-                    <!-- Air Time Section -->
-                    <div class="card mb-4">
-                         <div class="card-body">
-                              <h3>Air Time</h3>
-                              <div id="air-time-display" class="timer-display my-2">00:00:00.000</div>
-                              <button id="air-start" class="btn btn-success me-2">Start</button>
-                              <button id="air-stop" class="btn btn-danger">Stop</button>
-                              <div class="mt-2 timestamp" id="air-log"></div>
-                         </div>
-                    </div>
+          <!-- Air Time Section -->
+          <div class="card mb-4">
+               <div class="card-body">
+               <h3>Air Time</h3>
+               <div id="air-time-display" class="timer-display my-2">00:00:00.000</div>
+          
+               <!-- Responsive Button Group -->
+               <div class="d-flex flex-wrap justify-content-center gap-2 my-2">
+                    <button id="air-start" class="btn btn-success">Start</button>
+                    <button id="air-stop" class="btn btn-danger" disabled>Stop</button>
+                    <button id="air-reset" class="btn btn-primary" style="display:none;" title="Reset">
+                         <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+               </div>
+          
+               <div class="mt-2 timestamp" id="air-log"></div>
+               </div>
+          </div>
+ 
+
+          <!-- History Section -->
+          <div class="card">
+               <div class="card-body">
+                    <h3>History</h3>
+                    <div id="history-log" class="text-start" style="max-height: 300px; overflow-y: auto;"></div>
+               </div>
           </div>
 
-          <script>
-               function Timer(displayElement, logElement, startButton) {
+    </div>
+
+    <script>
+          function Timer(displayElement, logElement, startButton, stopButton, refreshButton, historyLog, label) {
+               this.startTime = null;
+               this.elapsed = 0;
+               this.timerInterval = null;
+               this.started = false;
+               this.stopped = false;
+               this.label = label; // 'Flight' or 'Air'
+
+               this.start = () => {
+                    if (this.started) return;
+                    this.started = true;
+                    this.stopped = false;
+                    this.startTime = Date.now();
+                    startButton.disabled = true;
+                    stopButton.disabled = false;
+                    refreshButton.style.display = 'none';
+
+                    this.timerInterval = setInterval(() => {
+                         this.elapsed = Date.now() - this.startTime;
+                         displayElement.textContent = formatTime(this.elapsed);
+                    }, 50);
+
+                    logElement.innerHTML += `<div>Start: ${new Date().toLocaleTimeString()}</div>`;
+               };
+
+               this.stop = () => {
+                    if (!this.started || this.stopped) return;
+                    if (!confirm('Are you sure you want to stop the timer?')) return;
+
+                    this.stopped = true;
+                    clearInterval(this.timerInterval);
+                    stopButton.disabled = true;
+                    refreshButton.style.display = 'inline-block';
+
+                    logElement.innerHTML += `<div>Stop: ${new Date().toLocaleTimeString()} | Total Time: ${formatTime(this.elapsed)}</div>`;
+               };
+
+               this.refresh = () => {
+                    // Log the finished session into history
+                    const historyEntry = document.createElement('div');
+                    historyEntry.className = 'history-entry';
+                    const startTimeStr = logElement.querySelector('div:first-child')?.textContent || 'Start: N/A';
+                    const stopTimeStr = logElement.querySelector('div:last-child')?.textContent || 'Stop: N/A';
+                    const totalTimeStr = `Total Time: ${formatTime(this.elapsed)}`;
+
+                    historyEntry.textContent = `${this.label} Session | ${startTimeStr} | ${stopTimeStr} | ${totalTimeStr}`;
+                    historyLog.prepend(historyEntry);
+
+                    // Reset timer
+                    clearInterval(this.timerInterval);
                     this.startTime = null;
                     this.elapsed = 0;
-                    this.timerInterval = null;
                     this.started = false;
+                    this.stopped = false;
 
-                    this.start = () => {
-                         if (this.started) return; // prevent multiple starts
-                         this.started = true;
-                         this.startTime = Date.now();
-                         startButton.disabled = true; // Disable Start button
+                    displayElement.textContent = '00:00:00.000';
+                    logElement.innerHTML = '';
+                    startButton.disabled = false;
+                    stopButton.disabled = true;
+                    refreshButton.style.display = 'none';
+               };
+          }
 
-                         this.timerInterval = setInterval(() => {
-                              this.elapsed = Date.now() - this.startTime;
-                              displayElement.textContent = formatTime(this.elapsed);
-                         }, 100);
+          function formatTime(ms) {
+               let totalSeconds = Math.floor(ms / 1000);
+               let hours = Math.floor(totalSeconds / 3600);
+               let minutes = Math.floor((totalSeconds % 3600) / 60);
+               let seconds = totalSeconds % 60;
+               let milliseconds = ms % 1000;
 
-                         logElement.innerHTML += `<div>Start: ${new Date().toLocaleTimeString()}</div>`;
-                    };
+               return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${padMillis(milliseconds)}`;
+          }
 
-                    this.stop = () => {
-                         if (!this.started) return;
-                         clearInterval(this.timerInterval);
-                         logElement.innerHTML += `<div>Stop: ${new Date().toLocaleTimeString()} | Total Time: ${formatTime(this.elapsed)}</div>`;
-                    };
-               }
+          function pad(num) {
+               return num.toString().padStart(2, '0');
+          }
 
-               function formatTime(ms) {
-                    let totalSeconds = Math.floor(ms / 1000);
-                    let hours = Math.floor(totalSeconds / 3600);
-                    let minutes = Math.floor((totalSeconds % 3600) / 60);
-                    let seconds = totalSeconds % 60;
-                    let milliseconds = ms % 1000;
+          function padMillis(num) {
+               return num.toString().padStart(3, '0');
+          }
 
-                    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${padMillis(milliseconds)}`;
-               }
+          // Initialize timers with history log
+          const historyLog = document.getElementById('history-log');
 
-               function pad(num) {
-                    return num.toString().padStart(2, '0');
-               }
+          const flightTimer = new Timer(
+               document.getElementById('flight-time-display'),
+               document.getElementById('flight-log'),
+               document.getElementById('flight-start'),
+               document.getElementById('flight-stop'),
+               document.getElementById('flight-reset'),  // use "reset" instead of "refresh"
+               historyLog,
+               'Flight'
+          );
 
-               function padMillis(num) {
-                    return num.toString().padStart(3, '0');
-               }
+          const airTimer = new Timer(
+               document.getElementById('air-time-display'),
+               document.getElementById('air-log'),
+               document.getElementById('air-start'),
+               document.getElementById('air-stop'),
+               document.getElementById('air-reset'),   // use "reset" instead of "refresh"
+               historyLog,
+               'Air'
+          );
 
-               // Initialize timers
-               const flightTimer = new Timer(
-                    document.getElementById('flight-time-display'),
-                    document.getElementById('flight-log'),
-                    document.getElementById('flight-start')
-               );
+          // Flight button events
+          document.getElementById('flight-start').addEventListener('click', flightTimer.start);
+          document.getElementById('flight-stop').addEventListener('click', flightTimer.stop);
+          document.getElementById('flight-reset').addEventListener('click', flightTimer.refresh); // still use refresh() function for logic
 
-               const airTimer = new Timer(
-                    document.getElementById('air-time-display'),
-                    document.getElementById('air-log'),
-                    document.getElementById('air-start')
-               );
+          // Air button events
+          document.getElementById('air-start').addEventListener('click', airTimer.start);
+          document.getElementById('air-stop').addEventListener('click', airTimer.stop);
+          document.getElementById('air-reset').addEventListener('click', airTimer.refresh);
 
-               // Flight button events
-               document.getElementById('flight-start').addEventListener('click', flightTimer.start);
-               document.getElementById('flight-stop').addEventListener('click', flightTimer.stop);
 
-               // Air button events
-               document.getElementById('air-start').addEventListener('click', airTimer.start);
-               document.getElementById('air-stop').addEventListener('click', airTimer.stop);
-          </script>
+          window.addEventListener('beforeunload', (event) => {
+               // Prevent page unload without confirmation
+               event.preventDefault();
+               event.returnValue = '';  // Required for some browsers
+          });
 
-     </body>
+    </script>
+
+</body>
 </html>
